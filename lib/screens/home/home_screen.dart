@@ -21,7 +21,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Turbo Fit'),
+        title: const Text('turbo'),
         titleTextStyle: theme.textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w800,
           letterSpacing: -0.5,

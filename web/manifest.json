@@ -1,6 +1,6 @@
 {
-    "name": "turbo_fit",
-    "short_name": "turbo_fit",
+    "name": "turbo",
+    "short_name": "turbo",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

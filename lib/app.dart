@@ -11,7 +11,7 @@ class TurboFitApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Turbo Fit',
+      title: 'turbo',
       debugShowCheckedModeBanner: false,
       theme: TurboFitTheme.dark(),
       home: Consumer<AppState>(
