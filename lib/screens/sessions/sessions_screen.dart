@@ -19,7 +19,10 @@ class SessionsScreen extends StatefulWidget {
 }
 
 class _SessionsScreenState extends State<SessionsScreen> {
+  static const int _pageSize = 20;
+
   DateTime? _selectedDate;
+  int _visibleCount = _pageSize;
 
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -33,6 +36,19 @@ class _SessionsScreenState extends State<SessionsScreen> {
         .toList();
   }
 
+  List<WorkoutSession> _pagedSessions(List<WorkoutSession> sessions) {
+    if (sessions.length <= _visibleCount) return sessions;
+    return sessions.take(_visibleCount).toList();
+  }
+
+  void _loadMore() {
+    setState(() => _visibleCount += _pageSize);
+  }
+
+  void _resetPagination() {
+    _visibleCount = _pageSize;
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -44,12 +60,16 @@ class _SessionsScreenState extends State<SessionsScreen> {
     if (picked != null) {
       setState(() {
         _selectedDate = DateTime(picked.year, picked.month, picked.day);
+        _resetPagination();
       });
     }
   }
 
   void _clearDate() {
-    setState(() => _selectedDate = null);
+    setState(() {
+      _selectedDate = null;
+      _resetPagination();
+    });
   }
 
   @override
@@ -59,6 +79,8 @@ class _SessionsScreenState extends State<SessionsScreen> {
     final dateFormat = DateFormat('EEEE d MMMM yyyy', 'fr_FR');
     final filterFormat = DateFormat('d MMMM yyyy', 'fr_FR');
     final sessions = _filteredSessions(state.sessionList);
+    final visibleSessions = _pagedSessions(sessions);
+    final hasMore = visibleSessions.length < sessions.length;
     final hasFilter = _selectedDate != null;
 
     return Scaffold(
@@ -192,11 +214,26 @@ class _SessionsScreenState extends State<SessionsScreen> {
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                          itemCount: sessions.length,
+                          itemCount:
+                              visibleSessions.length + (hasMore ? 1 : 0),
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            final session = sessions[index];
+                            if (index >= visibleSessions.length) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8),
+                                child: Center(
+                                  child: OutlinedButton(
+                                    onPressed: _loadMore,
+                                    child: Text(
+                                      'Voir plus (${sessions.length - visibleSessions.length})',
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            final session = visibleSessions[index];
                             return _SessionCard(
                               session: session,
                               dateLabel:
