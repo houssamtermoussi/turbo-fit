@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.asset(
-                'assets/icon/turbo-penguin-icon.jpg',
+                'assets/icon/app_icon.png',
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
