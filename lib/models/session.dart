@@ -1,113 +1,138 @@
-class WorkoutSession {
+class ExerciseSet {
   final int? id;
-  final int programId;
-  final String name;
-  final int orderIndex;
+  final int setNumber;
+  final int reps;
+  final double weight;
 
-  const WorkoutSession({
+  const ExerciseSet({
     this.id,
-    required this.programId,
-    required this.name,
-    this.orderIndex = 0,
+    required this.setNumber,
+    required this.reps,
+    this.weight = 0,
   });
 
-  WorkoutSession copyWith({
+  ExerciseSet copyWith({
     int? id,
-    int? programId,
-    String? name,
-    int? orderIndex,
+    int? setNumber,
+    int? reps,
+    double? weight,
   }) {
-    return WorkoutSession(
+    return ExerciseSet(
       id: id ?? this.id,
-      programId: programId ?? this.programId,
-      name: name ?? this.name,
-      orderIndex: orderIndex ?? this.orderIndex,
+      setNumber: setNumber ?? this.setNumber,
+      reps: reps ?? this.reps,
+      weight: weight ?? this.weight,
     );
   }
 
-  Map<String, Object?> toMap() {
+  Map<String, Object?> toMap(int exerciseId) {
     return {
       'id': id,
-      'program_id': programId,
-      'name': name,
-      'order_index': orderIndex,
+      'exercise_id': exerciseId,
+      'set_number': setNumber,
+      'reps': reps,
+      'weight': weight,
     };
   }
 
-  factory WorkoutSession.fromMap(Map<String, Object?> map) {
-    return WorkoutSession(
+  factory ExerciseSet.fromMap(Map<String, Object?> map) {
+    return ExerciseSet(
       id: map['id'] as int?,
-      programId: map['program_id'] as int,
-      name: map['name'] as String,
-      orderIndex: map['order_index'] as int? ?? 0,
+      setNumber: map['set_number'] as int,
+      reps: map['reps'] as int,
+      weight: (map['weight'] as num?)?.toDouble() ?? 0,
     );
   }
 }
 
 class SessionExercise {
   final int? id;
-  final int sessionId;
-  final int exerciseId;
-  final int targetSets;
-  final int targetReps;
-  final double? targetWeight;
-  final String? exerciseName;
-  final String? muscleGroup;
+  final String name;
+  final int orderIndex;
+  final List<ExerciseSet> sets;
 
   const SessionExercise({
     this.id,
-    required this.sessionId,
-    required this.exerciseId,
-    this.targetSets = 3,
-    this.targetReps = 10,
-    this.targetWeight,
-    this.exerciseName,
-    this.muscleGroup,
+    required this.name,
+    this.orderIndex = 0,
+    this.sets = const [],
   });
 
   SessionExercise copyWith({
     int? id,
-    int? sessionId,
-    int? exerciseId,
-    int? targetSets,
-    int? targetReps,
-    double? targetWeight,
-    String? exerciseName,
-    String? muscleGroup,
+    String? name,
+    int? orderIndex,
+    List<ExerciseSet>? sets,
   }) {
     return SessionExercise(
       id: id ?? this.id,
-      sessionId: sessionId ?? this.sessionId,
-      exerciseId: exerciseId ?? this.exerciseId,
-      targetSets: targetSets ?? this.targetSets,
-      targetReps: targetReps ?? this.targetReps,
-      targetWeight: targetWeight ?? this.targetWeight,
-      exerciseName: exerciseName ?? this.exerciseName,
-      muscleGroup: muscleGroup ?? this.muscleGroup,
+      name: name ?? this.name,
+      orderIndex: orderIndex ?? this.orderIndex,
+      sets: sets ?? this.sets,
+    );
+  }
+
+  factory SessionExercise.fromMap(Map<String, Object?> map) {
+    return SessionExercise(
+      id: map['id'] as int?,
+      name: map['name'] as String,
+      orderIndex: map['order_index'] as int? ?? 0,
+    );
+  }
+}
+
+class WorkoutSession {
+  final int? id;
+  final DateTime performedAt;
+  final String notes;
+  final String? photoPath;
+  final List<SessionExercise> exercises;
+
+  const WorkoutSession({
+    this.id,
+    required this.performedAt,
+    this.notes = '',
+    this.photoPath,
+    this.exercises = const [],
+  });
+
+  int get exerciseCount => exercises.length;
+
+  int get totalSets =>
+      exercises.fold(0, (sum, exercise) => sum + exercise.sets.length);
+
+  WorkoutSession copyWith({
+    int? id,
+    DateTime? performedAt,
+    String? notes,
+    String? photoPath,
+    bool clearPhoto = false,
+    List<SessionExercise>? exercises,
+  }) {
+    return WorkoutSession(
+      id: id ?? this.id,
+      performedAt: performedAt ?? this.performedAt,
+      notes: notes ?? this.notes,
+      photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
+      exercises: exercises ?? this.exercises,
     );
   }
 
   Map<String, Object?> toMap() {
     return {
       'id': id,
-      'session_id': sessionId,
-      'exercise_id': exerciseId,
-      'target_sets': targetSets,
-      'target_reps': targetReps,
-      'target_weight': targetWeight,
+      'performed_at': performedAt.toIso8601String(),
+      'notes': notes,
+      'photo_path': photoPath,
     };
   }
 
-  factory SessionExercise.fromMap(Map<String, Object?> map) {
-    return SessionExercise(
+  factory WorkoutSession.fromMap(Map<String, Object?> map) {
+    return WorkoutSession(
       id: map['id'] as int?,
-      sessionId: map['session_id'] as int,
-      exerciseId: map['exercise_id'] as int,
-      targetSets: map['target_sets'] as int? ?? 3,
-      targetReps: map['target_reps'] as int? ?? 10,
-      targetWeight: (map['target_weight'] as num?)?.toDouble(),
-      exerciseName: map['exercise_name'] as String?,
-      muscleGroup: map['muscle_group'] as String?,
+      performedAt: DateTime.parse(map['performed_at'] as String),
+      notes: (map['notes'] as String?) ?? '',
+      photoPath: map['photo_path'] as String?,
     );
   }
 }

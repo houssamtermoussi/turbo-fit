@@ -40,12 +40,6 @@ class TurboFitTheme {
         backgroundColor: crimson,
         foregroundColor: mist,
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: slate,
-        selectedItemColor: crimson,
-        unselectedItemColor: Color(0xFF7A7A7A),
-        type: BottomNavigationBarType.fixed,
-      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: slate,

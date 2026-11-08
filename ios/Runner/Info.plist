@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSCameraUsageDescription</key>
+	<string>turbo a besoin de la caméra pour ajouter une photo à ta séance.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>turbo a besoin d’accéder à tes photos pour les joindre à une séance.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

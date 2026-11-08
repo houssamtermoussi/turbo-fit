@@ -19,39 +19,36 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        await _dropAll(db);
+        await _onCreate(db, newVersion);
+      },
     );
+  }
+
+  Future<void> _dropAll(Database db) async {
+    await db.execute('DROP TABLE IF EXISTS session_sets');
+    await db.execute('DROP TABLE IF EXISTS set_logs');
+    await db.execute('DROP TABLE IF EXISTS workout_logs');
+    await db.execute('DROP TABLE IF EXISTS goals');
+    await db.execute('DROP TABLE IF EXISTS session_exercises');
+    await db.execute('DROP TABLE IF EXISTS sessions');
+    await db.execute('DROP TABLE IF EXISTS programs');
+    await db.execute('DROP TABLE IF EXISTS exercises');
   }
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE exercises (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        muscle_group TEXT NOT NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE programs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        notes TEXT NOT NULL DEFAULT '',
-        is_active INTEGER NOT NULL DEFAULT 0
-      )
-    ''');
-
-    await db.execute('''
       CREATE TABLE sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        program_id INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        order_index INTEGER NOT NULL DEFAULT 0,
-        FOREIGN KEY (program_id) REFERENCES programs (id) ON DELETE CASCADE
+        performed_at TEXT NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        photo_path TEXT
       )
     ''');
 
@@ -59,75 +56,21 @@ class AppDatabase {
       CREATE TABLE session_exercises (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id INTEGER NOT NULL,
-        exercise_id INTEGER NOT NULL,
-        target_sets INTEGER NOT NULL DEFAULT 3,
-        target_reps INTEGER NOT NULL DEFAULT 10,
-        target_weight REAL,
-        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE,
-        FOREIGN KEY (exercise_id) REFERENCES exercises (id)
+        name TEXT NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
       )
     ''');
 
     await db.execute('''
-      CREATE TABLE workout_logs (
+      CREATE TABLE session_sets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        session_id INTEGER NOT NULL,
-        performed_at TEXT NOT NULL,
-        notes TEXT NOT NULL DEFAULT '',
-        FOREIGN KEY (session_id) REFERENCES sessions (id)
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE set_logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        workout_log_id INTEGER NOT NULL,
         exercise_id INTEGER NOT NULL,
         set_number INTEGER NOT NULL,
         reps INTEGER NOT NULL,
-        weight REAL NOT NULL,
-        FOREIGN KEY (workout_log_id) REFERENCES workout_logs (id) ON DELETE CASCADE,
-        FOREIGN KEY (exercise_id) REFERENCES exercises (id)
+        weight REAL NOT NULL DEFAULT 0,
+        FOREIGN KEY (exercise_id) REFERENCES session_exercises (id) ON DELETE CASCADE
       )
     ''');
-
-    await db.execute('''
-      CREATE TABLE goals (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        exercise_id INTEGER NOT NULL,
-        target_weight REAL NOT NULL,
-        current_best REAL NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (exercise_id) REFERENCES exercises (id)
-      )
-    ''');
-
-    await _seedExercises(db);
-  }
-
-  Future<void> _seedExercises(Database db) async {
-    const seeds = [
-      ('Développé couché', 'Pectoraux'),
-      ('Squat', 'Jambes'),
-      ('Soulevé de terre', 'Dos'),
-      ('Développé militaire', 'Épaules'),
-      ('Rowing barre', 'Dos'),
-      ('Tractions', 'Dos'),
-      ('Dips', 'Pectoraux'),
-      ('Curl biceps', 'Bras'),
-      ('Extension triceps', 'Bras'),
-      ('Fentes', 'Jambes'),
-      ('Leg press', 'Jambes'),
-      ('Élévations latérales', 'Épaules'),
-      ('Hip thrust', 'Jambes'),
-      ('Pompes', 'Pectoraux'),
-      ('Planche', 'Core'),
-    ];
-
-    final batch = db.batch();
-    for (final (name, group) in seeds) {
-      batch.insert('exercises', {'name': name, 'muscle_group': group});
-    }
-    await batch.commit(noResult: true);
   }
 }
