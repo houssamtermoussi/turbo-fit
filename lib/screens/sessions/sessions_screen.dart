@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../models/session.dart';
 import '../../providers/app_state.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/penguin_feeling.dart';
 import 'session_detail_screen.dart';
 import 'session_form_screen.dart';
 
@@ -257,11 +258,18 @@ class _SessionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    dateLabel,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          dateLabel,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      PenguinFeelingBadge(value: session.feeling),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(

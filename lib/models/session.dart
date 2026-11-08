@@ -86,6 +86,8 @@ class WorkoutSession {
   final DateTime performedAt;
   final String notes;
   final String? photoPath;
+  /// Ressenti de la séance, de 1 (faible) à 5 (max).
+  final int feeling;
   final List<SessionExercise> exercises;
 
   const WorkoutSession({
@@ -93,6 +95,7 @@ class WorkoutSession {
     required this.performedAt,
     this.notes = '',
     this.photoPath,
+    this.feeling = 3,
     this.exercises = const [],
   });
 
@@ -107,6 +110,7 @@ class WorkoutSession {
     String? notes,
     String? photoPath,
     bool clearPhoto = false,
+    int? feeling,
     List<SessionExercise>? exercises,
   }) {
     return WorkoutSession(
@@ -114,6 +118,7 @@ class WorkoutSession {
       performedAt: performedAt ?? this.performedAt,
       notes: notes ?? this.notes,
       photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
+      feeling: feeling ?? this.feeling,
       exercises: exercises ?? this.exercises,
     );
   }
@@ -124,15 +129,18 @@ class WorkoutSession {
       'performed_at': performedAt.toIso8601String(),
       'notes': notes,
       'photo_path': photoPath,
+      'feeling': feeling.clamp(1, 5),
     };
   }
 
   factory WorkoutSession.fromMap(Map<String, Object?> map) {
+    final rawFeeling = map['feeling'] as int? ?? 3;
     return WorkoutSession(
       id: map['id'] as int?,
       performedAt: DateTime.parse(map['performed_at'] as String),
       notes: (map['notes'] as String?) ?? '',
       photoPath: map['photo_path'] as String?,
+      feeling: rawFeeling.clamp(1, 5),
     );
   }
 }

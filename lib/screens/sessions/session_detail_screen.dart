@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/session.dart';
 import '../../providers/app_state.dart';
+import '../../widgets/penguin_feeling.dart';
 import 'session_form_screen.dart';
 
 class SessionDetailScreen extends StatelessWidget {
@@ -60,11 +61,24 @@ class SessionDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          Text(
-            dateFormat.format(current.performedAt),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  dateFormat.format(current.performedAt),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              PenguinFeelingBadge(
+                value: current.feeling,
+                size: 36,
+                fontSize: 24,
+              ),
+            ],
           ),
           if (current.notes.isNotEmpty) ...[
             const SizedBox(height: 8),

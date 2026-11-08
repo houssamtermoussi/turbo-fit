@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/session.dart';
 import '../../providers/app_state.dart';
+import '../../widgets/penguin_feeling.dart';
 
 class SessionFormScreen extends StatefulWidget {
   const SessionFormScreen({super.key, this.session});
@@ -23,6 +24,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
   late final TextEditingController _notesController;
   final List<_ExerciseDraft> _exercises = [];
   String? _photoPath;
+  late int _feeling;
   bool _saving = false;
 
   bool get _isEditing => widget.session != null;
@@ -34,6 +36,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
     _date = session?.performedAt ?? DateTime.now();
     _notesController = TextEditingController(text: session?.notes ?? '');
     _photoPath = session?.photoPath;
+    _feeling = session?.feeling ?? 3;
 
     if (session != null && session.exercises.isNotEmpty) {
       for (final exercise in session.exercises) {
@@ -203,6 +206,7 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
         performedAt: _date,
         notes: _notesController.text.trim(),
         photoPath: photoPath,
+        feeling: _feeling,
         exercises: exercises,
       );
 
@@ -258,10 +262,15 @@ class _SessionFormScreenState extends State<SessionFormScreen> {
             controller: _notesController,
             decoration: const InputDecoration(
               labelText: 'Notes (optionnel)',
-              hintText: 'Ressenti, focus du jour…',
+              hintText: 'Focus du jour…',
             ),
             maxLines: 2,
             textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 20),
+          PenguinFeelingPicker(
+            value: _feeling,
+            onChanged: (value) => setState(() => _feeling = value),
           ),
           const SizedBox(height: 20),
           Text(

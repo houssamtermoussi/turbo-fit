@@ -19,14 +19,22 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
       onUpgrade: (db, oldVersion, newVersion) async {
-        await _dropAll(db);
-        await _onCreate(db, newVersion);
+        if (oldVersion < 2) {
+          await _dropAll(db);
+          await _onCreate(db, newVersion);
+          return;
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE sessions ADD COLUMN feeling INTEGER NOT NULL DEFAULT 3',
+          );
+        }
       },
     );
   }
@@ -48,7 +56,8 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         performed_at TEXT NOT NULL,
         notes TEXT NOT NULL DEFAULT '',
-        photo_path TEXT
+        photo_path TEXT,
+        feeling INTEGER NOT NULL DEFAULT 3
       )
     ''');
 
