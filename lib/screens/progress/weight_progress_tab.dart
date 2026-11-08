@@ -52,11 +52,8 @@ class WeightProgressTab extends StatelessWidget {
 
     if (result == null || !context.mounted) return;
 
-    final weighedAt = DateTime(
-      result.date.year,
-      result.date.month,
-      result.date.day,
-    );
+    final date = result.date!;
+    final weighedAt = DateTime(date.year, date.month, date.day);
     final sameDay = last != null &&
         last.weighedAt.year == weighedAt.year &&
         last.weighedAt.month == weighedAt.month &&
@@ -80,11 +77,50 @@ class WeightProgressTab extends StatelessWidget {
         initialWeight: _plain(log.weight),
         title: 'Modifier la mesure',
         initialDate: log.weighedAt,
+        canDelete: log.id != null,
       ),
     );
 
     if (result == null || !context.mounted) return;
+
+    if (result.delete) {
+      if (log.id != null) {
+        await state.deleteWeightLog(log.id!);
+      }
+      return;
+    }
+
     await _saveWeightDraft(state, result, id: log.id);
+  }
+
+  Future<bool> _confirmDeleteWeight(
+    BuildContext context,
+    BodyWeightLog log,
+  ) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Supprimer ?'),
+            content: Text(
+              'Supprimer la mesure du ${DateFormat('d MMMM yyyy', 'fr_FR').format(log.weighedAt)} ?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Annuler'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Supprimer'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed || log.id == null || !context.mounted) return false;
+    await context.read<AppState>().deleteWeightLog(log.id!);
+    return true;
   }
 
   Future<void> _saveWeightDraft(
@@ -92,14 +128,11 @@ class WeightProgressTab extends StatelessWidget {
     _WeightDraft result, {
     int? id,
   }) async {
+    final date = result.date!;
     await state.saveWeightLog(
       BodyWeightLog(
         id: id,
-        weighedAt: DateTime(
-          result.date.year,
-          result.date.month,
-          result.date.day,
-        ),
+        weighedAt: DateTime(date.year, date.month, date.day),
         weight: result.weight,
       ),
     );
@@ -377,28 +410,9 @@ class WeightProgressTab extends StatelessWidget {
               child: const Icon(Icons.delete_outline, color: Colors.white),
             ),
             confirmDismiss: (_) async {
-              final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Supprimer ?'),
-                      content: Text(
-                        'Supprimer la mesure du ${DateFormat('d MMMM yyyy', 'fr_FR').format(log.weighedAt)} ?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Annuler'),
-                        ),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Supprimer'),
-                        ),
-                      ],
-                    ),
-                  ) ??
-                  false;
-              if (!confirmed || log.id == null) return false;
-              await state.deleteWeightLog(log.id!);
+              await _confirmDeleteWeight(context, log);
+              // Parent rebuild removes the item; returning true would
+              // conflict with the already-refreshed list.
               return false;
             },
             child: Card(
@@ -411,10 +425,13 @@ class WeightProgressTab extends StatelessWidget {
                 subtitle: Text(
                   DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(log.weighedAt),
                 ),
-                trailing: Icon(
-                  Icons.edit_outlined,
-                  size: 18,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                trailing: IconButton(
+                  tooltip: 'Supprimer',
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.error,
+                  ),
+                  onPressed: () => _confirmDeleteWeight(context, log),
                 ),
               ),
             ),
@@ -445,10 +462,19 @@ class WeightProgressTab extends StatelessWidget {
 }
 
 class _WeightDraft {
-  const _WeightDraft({required this.weight, required this.date});
+  const _WeightDraft({
+    required this.weight,
+    required this.date,
+  }) : delete = false;
+
+  const _WeightDraft.delete()
+      : weight = 0,
+        date = null,
+        delete = true;
 
   final double weight;
-  final DateTime date;
+  final DateTime? date;
+  final bool delete;
 }
 
 class _GoalDraft {
@@ -463,11 +489,13 @@ class _WeightLogDialog extends StatefulWidget {
     required this.initialWeight,
     this.title = 'Ajouter un poids',
     this.initialDate,
+    this.canDelete = false,
   });
 
   final String initialWeight;
   final String title;
   final DateTime? initialDate;
+  final bool canDelete;
 
   @override
   State<_WeightLogDialog> createState() => _WeightLogDialogState();
@@ -541,6 +569,12 @@ class _WeightLogDialogState extends State<_WeightLogDialog> {
         ],
       ),
       actions: [
+        if (widget.canDelete)
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context, const _WeightDraft.delete()),
+            child: const Text('Supprimer'),
+          ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Annuler'),
