@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/theme.dart';
 
-/// Pingouin rouge Turbo Fit + numéro de ressenti (1–5).
+/// Visage de pingouin Turbo Fit + numéro de ressenti (1–5).
 class PenguinFeelingBadge extends StatelessWidget {
   const PenguinFeelingBadge({
     super.key,
@@ -21,20 +21,17 @@ class PenguinFeelingBadge extends StatelessWidget {
 
     return Row(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        ColorFiltered(
-          colorFilter: const ColorFilter.mode(
-            TurboFitTheme.crimson,
-            BlendMode.modulate,
-          ),
-          child: Image.asset(
-            'assets/icon/app_icon.png',
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-          ),
+        Image.asset(
+          'assets/icon/penguin_feeling_face.png',
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+          gaplessPlayback: true,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 4),
         Text(
           '$level',
           style: TextStyle(
@@ -49,7 +46,7 @@ class PenguinFeelingBadge extends StatelessWidget {
   }
 }
 
-/// Sélecteur 1–5 : chaque option = pingouin rouge + numéro.
+/// Sélecteur 1–5 : chaque option = visage de pingouin et numéro.
 class PenguinFeelingPicker extends StatelessWidget {
   const PenguinFeelingPicker({
     super.key,
@@ -107,7 +104,7 @@ class PenguinFeelingPicker extends StatelessWidget {
                       child: Center(
                         child: PenguinFeelingBadge(
                           value: level,
-                          size: 22,
+                          size: 28,
                           fontSize: 16,
                         ),
                       ),

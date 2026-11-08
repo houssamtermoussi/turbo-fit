@@ -78,6 +78,7 @@ flutter:
 
   assets:
     - assets/icon/app_icon.png
+    - assets/icon/penguin_feeling_face.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
