@@ -76,7 +76,7 @@ class _SessionsScreenState extends State<SessionsScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              'turbo',
+              'HOUSSAM FIT',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,

@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>turbo a besoin de la caméra pour ajouter une photo à ta séance.</string>
+	<string>houssam a besoin de la caméra pour ajouter une photo à ta séance.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>turbo a besoin d’accéder à tes photos pour les joindre à une séance.</string>
+	<string>houssam a besoin d’accéder à tes photos pour les joindre à une séance.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>turbo</string>
+	<string>houssam</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -19,7 +19,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>turbo</string>
+	<string>houssam</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
