@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 class TurboFitTheme {
-  static const Color electric = Color(0xFF00E5A8);
-  static const Color charcoal = Color(0xFF0F1419);
-  static const Color slate = Color(0xFF1A2332);
-  static const Color mist = Color(0xFFE8EEF5);
-  static const Color amber = Color(0xFFFFB020);
+  static const Color crimson = Color(0xFFE10600);
+  static const Color charcoal = Color(0xFF0A0A0A);
+  static const Color slate = Color(0xFF161616);
+  static const Color mist = Color(0xFFF2F2F2);
+  static const Color ember = Color(0xFFFF4D4D);
 
   static ThemeData dark() {
     final base = ColorScheme.fromSeed(
-      seedColor: electric,
+      seedColor: crimson,
       brightness: Brightness.dark,
       surface: slate,
     );
@@ -18,9 +18,9 @@ class TurboFitTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: base.copyWith(
-        primary: electric,
-        onPrimary: charcoal,
-        secondary: amber,
+        primary: crimson,
+        onPrimary: mist,
+        secondary: ember,
         surface: slate,
         onSurface: mist,
       ),
@@ -37,13 +37,13 @@ class TurboFitTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: electric,
-        foregroundColor: charcoal,
+        backgroundColor: crimson,
+        foregroundColor: mist,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: slate,
-        selectedItemColor: electric,
-        unselectedItemColor: Color(0xFF7A8899),
+        selectedItemColor: crimson,
+        unselectedItemColor: Color(0xFF7A7A7A),
         type: BottomNavigationBarType.fixed,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -55,7 +55,7 @@ class TurboFitTheme {
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: electric,
+        color: crimson,
       ),
     );
   }

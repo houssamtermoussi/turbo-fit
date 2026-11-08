@@ -7,6 +7,6 @@ void main() {
   test('Turbo Fit theme builds', () {
     final theme = TurboFitTheme.dark();
     expect(theme.brightness, equals(Brightness.dark));
-    expect(theme.colorScheme.primary, equals(TurboFitTheme.electric));
+    expect(theme.colorScheme.primary, equals(TurboFitTheme.crimson));
   });
 }
