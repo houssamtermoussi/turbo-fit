@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
 import 'providers/app_state.dart';
-import 'screens/sessions/sessions_screen.dart';
+import 'screens/shell/main_shell.dart';
 
 class TurboFitApp extends StatelessWidget {
   const TurboFitApp({super.key});
@@ -29,7 +29,7 @@ class TurboFitApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          return const SessionsScreen();
+          return const MainShell();
         },
       ),
     );

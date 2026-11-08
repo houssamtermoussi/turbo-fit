@@ -19,7 +19,7 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -35,6 +35,9 @@ class AppDatabase {
             'ALTER TABLE sessions ADD COLUMN feeling INTEGER NOT NULL DEFAULT 3',
           );
         }
+        if (oldVersion < 4) {
+          await _createProgressTables(db);
+        }
       },
     );
   }
@@ -44,6 +47,8 @@ class AppDatabase {
     await db.execute('DROP TABLE IF EXISTS set_logs');
     await db.execute('DROP TABLE IF EXISTS workout_logs');
     await db.execute('DROP TABLE IF EXISTS goals');
+    await db.execute('DROP TABLE IF EXISTS body_weight_logs');
+    await db.execute('DROP TABLE IF EXISTS weight_goals');
     await db.execute('DROP TABLE IF EXISTS session_exercises');
     await db.execute('DROP TABLE IF EXISTS sessions');
     await db.execute('DROP TABLE IF EXISTS programs');
@@ -79,6 +84,27 @@ class AppDatabase {
         reps INTEGER NOT NULL,
         weight REAL NOT NULL DEFAULT 0,
         FOREIGN KEY (exercise_id) REFERENCES session_exercises (id) ON DELETE CASCADE
+      )
+    ''');
+
+    await _createProgressTables(db);
+  }
+
+  Future<void> _createProgressTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS body_weight_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weighed_at TEXT NOT NULL,
+        weight REAL NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS weight_goals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        start_weight REAL NOT NULL,
+        target_weight REAL NOT NULL,
+        created_at TEXT NOT NULL
       )
     ''');
   }

@@ -5,7 +5,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../models/body_weight.dart';
+import '../models/performance.dart';
 import '../models/session.dart';
+import '../repositories/body_weight_repository.dart';
+import '../repositories/performance_repository.dart';
 import '../repositories/session_repository.dart';
 
 class AppState extends ChangeNotifier {
@@ -13,9 +17,14 @@ class AppState extends ChangeNotifier {
 
   final Database _db;
   late final SessionRepository sessions = SessionRepository(_db);
+  late final BodyWeightRepository bodyWeight = BodyWeightRepository(_db);
+  late final PerformanceRepository performance = PerformanceRepository(_db);
 
   bool loading = true;
   List<WorkoutSession> sessionList = [];
+  List<BodyWeightLog> weightLogs = [];
+  WeightGoal? weightGoal;
+  List<ExercisePerformanceSummary> performanceSummaries = [];
 
   Future<void> init() async {
     loading = true;
@@ -27,6 +36,9 @@ class AppState extends ChangeNotifier {
 
   Future<void> refreshAll() async {
     sessionList = await sessions.getAll();
+    weightLogs = await bodyWeight.getLogs();
+    weightGoal = await bodyWeight.getActiveGoal();
+    performanceSummaries = await performance.getSummaries();
     notifyListeners();
   }
 
@@ -49,6 +61,26 @@ class AppState extends ChangeNotifier {
         await file.delete();
       }
     }
+    await refreshAll();
+  }
+
+  Future<void> saveWeightLog(BodyWeightLog log) async {
+    await bodyWeight.saveLog(log);
+    await refreshAll();
+  }
+
+  Future<void> deleteWeightLog(int id) async {
+    await bodyWeight.deleteLog(id);
+    await refreshAll();
+  }
+
+  Future<void> saveWeightGoal(WeightGoal goal) async {
+    await bodyWeight.saveGoal(goal);
+    await refreshAll();
+  }
+
+  Future<void> clearWeightGoal() async {
+    await bodyWeight.clearGoal();
     await refreshAll();
   }
 
