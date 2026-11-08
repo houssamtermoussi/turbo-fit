@@ -34,9 +34,67 @@ class WeightProgressTab extends StatelessWidget {
     );
 
     if (result == null || !context.mounted) return;
+    await _saveWeightDraft(state, result);
+  }
 
+  Future<void> _editCurrentWeight(BuildContext context) async {
+    final state = context.read<AppState>();
+    final last = state.weightLogs.isEmpty ? null : state.weightLogs.last;
+
+    final result = await showDialog<_WeightDraft>(
+      context: context,
+      builder: (context) => _WeightLogDialog(
+        initialWeight: last == null ? '' : _plain(last.weight),
+        title: 'Modifier le poids actuel',
+        initialDate: last?.weighedAt,
+      ),
+    );
+
+    if (result == null || !context.mounted) return;
+
+    final weighedAt = DateTime(
+      result.date.year,
+      result.date.month,
+      result.date.day,
+    );
+    final sameDay = last != null &&
+        last.weighedAt.year == weighedAt.year &&
+        last.weighedAt.month == weighedAt.month &&
+        last.weighedAt.day == weighedAt.day;
+
+    await _saveWeightDraft(
+      state,
+      result,
+      id: sameDay ? last.id : null,
+    );
+  }
+
+  Future<void> _editWeightLog(
+    BuildContext context,
+    BodyWeightLog log,
+  ) async {
+    final state = context.read<AppState>();
+    final result = await showDialog<_WeightDraft>(
+      context: context,
+      builder: (context) => _WeightLogDialog(
+        initialWeight: _plain(log.weight),
+        title: 'Modifier la mesure',
+        initialDate: log.weighedAt,
+      ),
+    );
+
+    if (result == null || !context.mounted) return;
+    await _saveWeightDraft(state, result, id: log.id);
+  }
+
+  Future<void> _saveWeightDraft(
+    AppState state,
+    _WeightDraft result, {
+    int? id,
+  }) async {
     await state.saveWeightLog(
       BodyWeightLog(
+        id: id,
         weighedAt: DateTime(
           result.date.year,
           result.date.month,
@@ -145,6 +203,7 @@ class WeightProgressTab extends StatelessWidget {
                     _StatChip(
                       label: 'Actuel',
                       value: current == null ? '—' : _formatKg(current),
+                      onTap: () => _editCurrentWeight(context),
                     ),
                     const SizedBox(width: 10),
                     _StatChip(
@@ -152,6 +211,7 @@ class WeightProgressTab extends StatelessWidget {
                       value: goal == null
                           ? '—'
                           : _formatKg(goal.targetWeight),
+                      onTap: () => _editGoal(context),
                     ),
                   ],
                 ),
@@ -343,12 +403,18 @@ class WeightProgressTab extends StatelessWidget {
             },
             child: Card(
               child: ListTile(
+                onTap: () => _editWeightLog(context, log),
                 title: Text(
                   _formatKg(log.weight),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
                   DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(log.weighedAt),
+                ),
+                trailing: Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
               ),
             ),
@@ -393,9 +459,15 @@ class _GoalDraft {
 }
 
 class _WeightLogDialog extends StatefulWidget {
-  const _WeightLogDialog({required this.initialWeight});
+  const _WeightLogDialog({
+    required this.initialWeight,
+    this.title = 'Ajouter un poids',
+    this.initialDate,
+  });
 
   final String initialWeight;
+  final String title;
+  final DateTime? initialDate;
 
   @override
   State<_WeightLogDialog> createState() => _WeightLogDialogState();
@@ -409,7 +481,7 @@ class _WeightLogDialogState extends State<_WeightLogDialog> {
   void initState() {
     super.initState();
     _weightCtrl = TextEditingController(text: widget.initialWeight);
-    _date = DateTime.now();
+    _date = widget.initialDate ?? DateTime.now();
   }
 
   @override
@@ -433,7 +505,7 @@ class _WeightLogDialogState extends State<_WeightLogDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Ajouter un poids'),
+      title: Text(widget.title),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -550,38 +622,59 @@ class _GoalDialogState extends State<_GoalDialog> {
 }
 
 class _StatChip extends StatelessWidget {
-  const _StatChip({required this.label, required this.value});
+  const _StatChip({
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
 
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
+      child: Material(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 14,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
