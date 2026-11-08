@@ -16,96 +16,33 @@ class WeightProgressTab extends StatelessWidget {
         : '${value.toStringAsFixed(1)} kg';
   }
 
+  String _plain(double value) {
+    return value == value.roundToDouble()
+        ? '${value.toInt()}'
+        : value.toStringAsFixed(1);
+  }
+
   Future<void> _addWeight(BuildContext context) async {
     final state = context.read<AppState>();
-    final weightCtrl = TextEditingController(
-      text: state.weightLogs.isEmpty
-          ? ''
-          : (state.weightLogs.last.weight ==
-                    state.weightLogs.last.weight.roundToDouble()
-                ? '${state.weightLogs.last.weight.toInt()}'
-                : state.weightLogs.last.weight.toStringAsFixed(1)),
-    );
-    var date = DateTime.now();
+    final initial = state.weightLogs.isEmpty
+        ? ''
+        : _plain(state.weightLogs.last.weight);
 
-    final saved = await showDialog<bool>(
+    final result = await showDialog<_WeightDraft>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setLocal) {
-            return AlertDialog(
-              title: const Text('Ajouter un poids'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: weightCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: 'Poids (kg)',
-                      hintText: 'ex. 78.5',
-                    ),
-                    autofocus: true,
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Date'),
-                    subtitle: Text(
-                      DateFormat('d MMMM yyyy', 'fr_FR').format(date),
-                    ),
-                    trailing: const Icon(Icons.calendar_today_outlined),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: date,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now().add(const Duration(days: 1)),
-                        locale: const Locale('fr', 'FR'),
-                      );
-                      if (picked != null) {
-                        setLocal(() => date = picked);
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Annuler'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Enregistrer'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (context) => _WeightLogDialog(initialWeight: initial),
     );
 
-    if (saved != true || !context.mounted) {
-      weightCtrl.dispose();
-      return;
-    }
-
-    final weight = double.tryParse(weightCtrl.text.trim().replaceAll(',', '.'));
-    weightCtrl.dispose();
-    if (weight == null || weight <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entre un poids valide.')),
-      );
-      return;
-    }
+    if (result == null || !context.mounted) return;
 
     await state.saveWeightLog(
       BodyWeightLog(
-        weighedAt: DateTime(date.year, date.month, date.day),
-        weight: weight,
+        weighedAt: DateTime(
+          result.date.year,
+          result.date.month,
+          result.date.day,
+        ),
+        weight: result.weight,
       ),
     );
   }
@@ -115,104 +52,41 @@ class WeightProgressTab extends StatelessWidget {
     final current = state.weightLogs.isEmpty
         ? null
         : state.weightLogs.last.weight;
-    final startCtrl = TextEditingController(
-      text: state.weightGoal != null
-          ? _plain(state.weightGoal!.startWeight)
-          : (current == null ? '' : _plain(current)),
-    );
-    final targetCtrl = TextEditingController(
-      text: state.weightGoal == null
-          ? ''
-          : _plain(state.weightGoal!.targetWeight),
-    );
 
-    final saved = await showDialog<bool>(
+    final result = await showDialog<_GoalDraft>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(
-            state.weightGoal == null
-                ? 'Définir un objectif'
-                : 'Modifier l’objectif',
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: startCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Poids de départ (kg)',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: targetCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Poids cible (kg)',
-                ),
-                autofocus: true,
-              ),
-            ],
-          ),
-          actions: [
-            if (state.weightGoal != null)
-              TextButton(
-                onPressed: () async {
-                  await state.clearWeightGoal();
-                  if (context.mounted) Navigator.pop(context, false);
-                },
-                child: const Text('Supprimer'),
-              ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Enregistrer'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => _GoalDialog(
+        initialTarget: state.weightGoal == null
+            ? ''
+            : _plain(state.weightGoal!.targetWeight),
+        canDelete: state.weightGoal != null,
+      ),
     );
 
-    if (saved != true || !context.mounted) {
-      startCtrl.dispose();
-      targetCtrl.dispose();
+    if (!context.mounted || result == null) return;
+
+    if (result.delete) {
+      await state.clearWeightGoal();
       return;
     }
 
-    final start = double.tryParse(startCtrl.text.trim().replaceAll(',', '.'));
-    final target = double.tryParse(targetCtrl.text.trim().replaceAll(',', '.'));
-    startCtrl.dispose();
-    targetCtrl.dispose();
-
-    if (start == null || start <= 0 || target == null || target <= 0) {
+    final target = result.target;
+    if (target == null || target <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Entre des poids valides.')),
+        const SnackBar(content: Text('Entre un but valide.')),
       );
       return;
     }
 
+    final start = current ?? state.weightGoal?.startWeight ?? target;
+
     await state.saveWeightGoal(
       WeightGoal(
-        startWeight: start,
+        startWeight: state.weightGoal?.startWeight ?? start,
         targetWeight: target,
-        createdAt: DateTime.now(),
+        createdAt: state.weightGoal?.createdAt ?? DateTime.now(),
       ),
     );
-  }
-
-  String _plain(double value) {
-    return value == value.roundToDouble()
-        ? '${value.toInt()}'
-        : value.toStringAsFixed(1);
   }
 
   @override
@@ -254,44 +128,34 @@ class WeightProgressTab extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _editGoal(context),
                 icon: const Icon(Icons.flag_outlined),
-                label: Text(goal == null ? 'Objectif' : 'Modifier'),
+                label: Text(goal == null ? 'But' : 'Modifier'),
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        if (goal != null) ...[
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Objectif de poids',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _StatChip(
+                      label: 'Actuel',
+                      value: current == null ? '—' : _formatKg(current),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      _StatChip(
-                        label: 'Départ',
-                        value: _formatKg(goal.startWeight),
-                      ),
-                      const SizedBox(width: 8),
-                      _StatChip(
-                        label: 'Actuel',
-                        value: current == null ? '—' : _formatKg(current),
-                      ),
-                      const SizedBox(width: 8),
-                      _StatChip(
-                        label: 'Cible',
-                        value: _formatKg(goal.targetWeight),
-                      ),
-                    ],
-                  ),
+                    const SizedBox(width: 10),
+                    _StatChip(
+                      label: 'But',
+                      value: goal == null
+                          ? '—'
+                          : _formatKg(goal.targetWeight),
+                    ),
+                  ],
+                ),
+                if (goal != null && current != null) ...[
                   const SizedBox(height: 14),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -302,17 +166,17 @@ class WeightProgressTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${(progress * 100).round()}% vers l’objectif',
+                    '${(progress * 100).round()}% vers le but',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-        ],
+        ),
+        const SizedBox(height: 16),
         if (logs.length >= 2) ...[
           Card(
             child: Padding(
@@ -368,7 +232,8 @@ class WeightProgressTab extends StatelessWidget {
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: (logs.length / 3).clamp(1, 10).toDouble(),
+                              interval:
+                                  (logs.length / 3).clamp(1, 10).toDouble(),
                               getTitlesWidget: (value, meta) {
                                 final index = value.round();
                                 if (index < 0 || index >= logs.length) {
@@ -420,7 +285,7 @@ class WeightProgressTab extends StatelessWidget {
                                           ?.copyWith(
                                             color: theme.colorScheme.secondary,
                                           ),
-                                      labelResolver: (_) => 'cible',
+                                      labelResolver: (_) => 'but',
                                     ),
                                   ),
                                 ],
@@ -452,7 +317,7 @@ class WeightProgressTab extends StatelessWidget {
               child: const Icon(Icons.delete_outline, color: Colors.white),
             ),
             confirmDismiss: (_) async {
-              return await showDialog<bool>(
+              final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text('Supprimer ?'),
@@ -472,11 +337,9 @@ class WeightProgressTab extends StatelessWidget {
                     ),
                   ) ??
                   false;
-            },
-            onDismissed: (_) {
-              if (log.id != null) {
-                state.deleteWeightLog(log.id!);
-              }
+              if (!confirmed || log.id == null) return false;
+              await state.deleteWeightLog(log.id!);
+              return false;
             },
             child: Card(
               child: ListTile(
@@ -512,6 +375,177 @@ class WeightProgressTab extends StatelessWidget {
       values.add(goal.startWeight);
     }
     return values.reduce((a, b) => a > b ? a : b) + 2;
+  }
+}
+
+class _WeightDraft {
+  const _WeightDraft({required this.weight, required this.date});
+
+  final double weight;
+  final DateTime date;
+}
+
+class _GoalDraft {
+  const _GoalDraft({this.target, this.delete = false});
+
+  final double? target;
+  final bool delete;
+}
+
+class _WeightLogDialog extends StatefulWidget {
+  const _WeightLogDialog({required this.initialWeight});
+
+  final String initialWeight;
+
+  @override
+  State<_WeightLogDialog> createState() => _WeightLogDialogState();
+}
+
+class _WeightLogDialogState extends State<_WeightLogDialog> {
+  late final TextEditingController _weightCtrl;
+  late DateTime _date;
+
+  @override
+  void initState() {
+    super.initState();
+    _weightCtrl = TextEditingController(text: widget.initialWeight);
+    _date = DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    _weightCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final weight =
+        double.tryParse(_weightCtrl.text.trim().replaceAll(',', '.'));
+    if (weight == null || weight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entre un poids valide.')),
+      );
+      return;
+    }
+    Navigator.pop(context, _WeightDraft(weight: weight, date: _date));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Ajouter un poids'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _weightCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Poids (kg)',
+              hintText: 'ex. 78.5',
+            ),
+            autofocus: true,
+            onSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: 12),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Date'),
+            subtitle: Text(DateFormat('d MMMM yyyy', 'fr_FR').format(_date)),
+            trailing: const Icon(Icons.calendar_today_outlined),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _date,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now().add(const Duration(days: 1)),
+                locale: const Locale('fr', 'FR'),
+              );
+              if (picked != null) {
+                setState(() => _date = picked);
+              }
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Enregistrer'),
+        ),
+      ],
+    );
+  }
+}
+
+class _GoalDialog extends StatefulWidget {
+  const _GoalDialog({
+    required this.initialTarget,
+    required this.canDelete,
+  });
+
+  final String initialTarget;
+  final bool canDelete;
+
+  @override
+  State<_GoalDialog> createState() => _GoalDialogState();
+}
+
+class _GoalDialogState extends State<_GoalDialog> {
+  late final TextEditingController _targetCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _targetCtrl = TextEditingController(text: widget.initialTarget);
+  }
+
+  @override
+  void dispose() {
+    _targetCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final target =
+        double.tryParse(_targetCtrl.text.trim().replaceAll(',', '.'));
+    Navigator.pop(context, _GoalDraft(target: target));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.canDelete ? 'Modifier le but' : 'Définir le but'),
+      content: TextField(
+        controller: _targetCtrl,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(
+          labelText: 'But (kg)',
+          hintText: 'ex. 75',
+        ),
+        autofocus: true,
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        if (widget.canDelete)
+          TextButton(
+            onPressed: () => Navigator.pop(context, const _GoalDraft(delete: true)),
+            child: const Text('Supprimer'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('Enregistrer'),
+        ),
+      ],
+    );
   }
 }
 
