@@ -35,7 +35,7 @@ class PenguinFeelingBadge extends StatelessWidget {
         Text(
           '$level',
           style: TextStyle(
-            color: TurboFitTheme.crimson,
+            color: Colors.white,
             fontSize: fontSize,
             fontWeight: FontWeight.w800,
             height: 1,
